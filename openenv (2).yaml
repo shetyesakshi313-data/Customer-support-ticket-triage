@@ -1,0 +1,73 @@
+name: support-ticket-triage
+version: "1.0.0"
+description: >
+  A real-world customer support ticket triage environment.
+  An AI agent reads support tickets and must classify priority,
+  route to the correct department, and generate resolution steps.
+
+tasks:
+  - name: easy
+    description: Classify ticket priority (low/medium/high/critical)
+    difficulty: easy
+    max_steps: 1
+    score_range: [0.0, 1.0]
+
+  - name: medium
+    description: Classify priority AND route to correct department
+    difficulty: medium
+    max_steps: 1
+    score_range: [0.0, 1.0]
+
+  - name: hard
+    description: Classify priority, route to department, AND generate resolution steps
+    difficulty: hard
+    max_steps: 1
+    score_range: [0.0, 1.0]
+
+action_space:
+  type: object
+  properties:
+    priority:
+      type: string
+      enum: [low, medium, high, critical]
+    department:
+      type: string
+      enum: [billing, technical, account, shipping, general]
+    resolution_steps:
+      type: array
+      items:
+        type: string
+
+observation_space:
+  type: object
+  properties:
+    ticket_id:
+      type: string
+    ticket_text:
+      type: string
+    task:
+      type: string
+    step:
+      type: integer
+    message:
+      type: string
+
+reward:
+  type: float
+  range: [0.0, 1.0]
+  description: >
+    easy:   1.0 for correct priority, partial credit for adjacent levels
+    medium: 0.5 * priority_score + 0.5 * department_score
+    hard:   0.4 * medium_score + 0.6 * resolution_keyword_coverage
+
+endpoints:
+  reset: POST /reset
+  step:  POST /step
+  state: GET  /state
+  health: GET /health
+
+runtime:
+  language: python
+  version: "3.11"
+  framework: fastapi
+  port: 7860
